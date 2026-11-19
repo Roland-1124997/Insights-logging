@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-	modules: ["@nuxt/test-utils/module"],
+	modules: [...(process.env.NUXT_ENABLE_TESTS=== "true" ? ["@nuxt/test-utils/module"] : [])],
+	ignore: ["**/tests/**"],
 
 	runtimeConfig: {
 		logging: {
