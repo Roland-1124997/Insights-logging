@@ -12,10 +12,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - branch: main
+          - branch: master
             artifact: main
+            repository: ${{ github.event.pull_request.base.repo.full_name }}
           - branch: ${{ github.head_ref }}
             artifact: pull-request
+            repository: ${{ github.event.pull_request.head.repo.full_name }}
 
     permissions:
       contents: read
@@ -24,7 +26,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ matrix.branch }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          repository: ${{ matrix.repository }}
 
       - name: "Install Node"
         uses: actions/setup-node@v6
