@@ -1,0 +1,78 @@
+# https://github.com/marketplace/actions/vitest-coverage-report
+name: "Test"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - branch: master
+            artifact: main
+            repository: ${{ github.event.pull_request.base.repo.full_name }}
+          - branch: ${{ github.head_ref }}
+            artifact: pull-request
+            repository: ${{ github.event.pull_request.head.repo.full_name }}
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ matrix.branch }}
+          repository: ${{ matrix.repository }}
+
+      - name: "Install Node"
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24.x"
+
+      - name: "Install Deps"
+        run: npm ci
+
+      - name: "Test"
+        run: npx vitest run --coverage.enabled true
+
+      - name: "Upload Coverage"
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-${{ matrix.artifact }}
+          path: tests/coverage/
+          if-no-files-found: error
+
+  report-coverage:
+    #https://stackoverflow.com/questions/68349031/only-run-actions-on-non-draft-pull-request
+    if: github.event.pull_request.draft == false
+    needs: test
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: "Check out repository"
+        uses: actions/checkout@v5
+
+      - name: "Download PR Coverage"
+        uses: actions/download-artifact@v6
+        with:
+          name: coverage-pull-request
+          path: coverage
+
+      - name: "Download Main Coverage"
+        uses: actions/download-artifact@v6
+        with:
+          name: coverage-main
+          path: coverage-main
+
+      - name: "Report Coverage"
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          json-summary-compare-path: coverage-main/coverage-summary.json
