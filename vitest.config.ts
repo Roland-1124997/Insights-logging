@@ -1,17 +1,10 @@
 // https://vitest.dev/guide/coverage
 // https://nuxt.com/docs/4.x/getting-started/testing
 
-const nuxtProjects = process.env.NUXT_ENABLE_TESTS === "true"
-	? [await (await import("@nuxt/test-utils/config")).defineVitestProject({
-			test: {
-				name: "nuxt",
-				include: ["tests/nuxt/*.{test,spec}.ts"],
-				environment: "nuxt",
-			},
-		})]
-	: [];
+import { defineConfig } from "vitest/config";
+import { defineVitestProject } from "@nuxt/test-utils/config";
 
-export default {
+export default defineConfig({
 	test: {
 		coverage: {
 			reportsDirectory: "./tests/coverage",
@@ -48,7 +41,13 @@ export default {
 					environment: "node",
 				},
 			},
-			...nuxtProjects,
+			await defineVitestProject({
+				test: {
+					name: "nuxt",
+					include: ["tests/nuxt/*.{test,spec}.ts"],
+					environment: "nuxt",
+				},
+			}),
 		],
 	},
-};
+});
